@@ -1,0 +1,85 @@
+import csv
+import os
+from py2neo import Graph, Node, Relationship
+
+# graph = Graph("bolt://localhost:7687", auth=("neo4j", "12345678"))
+graph = Graph("bolt://localhost:7687", auth=("neo4j", "12345678"), name="homework0911")
+# # 读取csv文件
+
+# # base_path = r"D:\\Neo4j\\Neo4j Desktop\\relate-data\dbmss\dbms-d7e7fef0-e395-4a1e-8725-5ca19500e04f\import"
+# # csv_file = os.path.join(base_path, "name.csv")
+
+# # with open(csv_file, encoding='utf-8') as f:
+# #     for line in f:
+# #       value = line.split()
+# #       name = value[0]
+# #       tx = graph.begin()
+# #       tx.run(f"CREATE (:name {{name: '{name}'}})") 
+# #       # (:name)表示创建一个标签为"name"的节点 {{name: '{name}'}}是一个属性 map,它将给该节点设置一个名为"name"的属性,属性值来自参数"{name}"
+# #       tx.commit()
+
+def create_nodes_from_csv(graph, label, property_name, base_path = r"D:\\Neo4j\\Neo4j Desktop\\relate-data\dbmss\dbms-d7e7fef0-e395-4a1e-8725-5ca19500e04f\import"):
+  csv_file = os.path.join(base_path, property_name + '.csv')
+  with open(csv_file, encoding='utf-8') as f:
+    for line in f:
+      values = line.split()
+      data = values[0] 
+      tx = graph.begin()
+      tx.run(f"CREATE (:{label} {{{property_name}: '{data}'}})")    
+      tx.commit()
+
+create_nodes_from_csv(graph,'name','name')
+create_nodes_from_csv(graph,'gang','gang')
+create_nodes_from_csv(graph,'ke','ke')
+create_nodes_from_csv(graph,'mu','mu')
+create_nodes_from_csv(graph,'shu','shu')
+
+
+# base_path = r"D:\\Neo4j\\Neo4j Desktop\\relate-data\dbmss\dbms-d7e7fef0-e395-4a1e-8725-5ca19500e04f\import"
+# csv_file = os.path.join(base_path, "kushu.csv")
+
+# with open(csv_file, encoding='utf-8') as f:
+#   for line in f:  
+#     values = line.split(',')
+#     ke = values[0]
+#     shu = values[1].strip()
+
+#     from_node = graph.nodes.match("ke", ke=ke).first()
+#     to_node = graph.nodes.match("shu", shu=shu).first()  
+
+#     rel = Relationship(from_node, "科属", to_node)
+#     graph.create(rel)
+
+
+def import_relationships(graph, from_label, to_label, rel_cn, base_path = r"D:\\Neo4j\\Neo4j Desktop\\relate-data\dbmss\dbms-d7e7fef0-e395-4a1e-8725-5ca19500e04f\import"):
+
+  csv_file = os.path.join(base_path, from_label + to_label + '.csv')
+  # print(csv_file)
+  with open(csv_file,encoding='utf-8') as f:
+    for line in f:  
+      values = line.split(',')
+      from_label_value = values[0]
+      to_label_value = values[1].strip()
+
+      print(from_label_value,to_label_value)
+
+      from_property = from_label
+      to_property = to_label
+
+      from_params = {from_property: from_label_value}
+      to_params = {to_property:to_label_value}
+
+      from_node = graph.nodes.match(from_label, **from_params).first()
+      to_node = graph.nodes.match(to_label, **to_params).first()
+      # from_node = graph.nodes.match(from_label, {from_property : from_label_value}).first()  
+      # to_node = graph.nodes.match(to_label, shu = to_label_value).first()
+      
+      print(from_node,to_node)
+
+      if from_node and to_node:
+        rel = Relationship(from_node, rel_cn, to_node)
+        graph.create(rel)
+
+import_relationships(graph, "ke", "shu" , "科属")
+import_relationships(graph, 'shu', 'name','属种')
+import_relationships(graph, 'mu', 'ke', '目科')
